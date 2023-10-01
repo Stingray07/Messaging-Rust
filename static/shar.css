@@ -1,0 +1,33 @@
+input[class="input"] {
+  width: 400px;
+  height: 50px;
+  font-size: 30px;
+}
+
+div[id="box"] {
+  background-color: rgb(162, 212, 212);
+  width: 350px;
+  height: 500px;
+  border-radius: 10px;
+  border-style: solid;
+  overflow-y: scroll;
+}
+
+input[class="message"] {
+  width: 300px;
+  height: 30px;
+  border-radius: 10px;
+  position: fixed;
+  top: 475px;
+  left: 20px;
+}
+
+#notification {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background-color: #f0f0f0; /* Light gray background color */
+  border: 1px solid #ccc; /* Gray border */
+  padding: 10px;
+  display: none;
+}
