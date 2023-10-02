@@ -1,15 +1,11 @@
-use crate::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct};
-use crate::rocket_funcs as funcs;
-use crate::err::BadJSONData;
+use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct};
+use crate::rocket_files::rocket_funcs as funcs;
+use crate::rocket_files::enums::BadJSONData;
 use chrono::{NaiveDate, Utc};
 use rocket::serde::json::Json;
 use rocket::response::Redirect;
 use rocket::http::{Cookie, CookieJar};
 use message::*;
-use rocket::fs::NamedFile;
-use std::path::Path;
-
-const HOME_PATH: &str = "static/home.html";
 
 #[post("/create_account.html", data = "<new_account>")]
 pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> {
@@ -107,69 +103,38 @@ pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
 
         Redirect::to("/")
     }
-
-
-}
-
-#[get("/")]
-pub fn redirect_to_login() -> Redirect {
-    let target_url = "/login.html";
-    Redirect::to(target_url)
-}
-
-#[get("/test/<name>")]
-pub fn test(name: &str) -> String {
-    format!("You are {}!", name)
-} 
-
-#[get("/home.html")]
-pub async fn get_home(cookies: &CookieJar<'_>) -> Result<NamedFile, rocket::http::Status> {
-
-    let user_id_from_cookie = match funcs::get_user_id_from_cookie(cookies) {
-        Ok(user_id) => user_id,
-        Err(e) => {
-            println!("{:?}", e);
-            return Err(rocket::http::Status::Unauthorized);    
-        }
-    };
-
-    let session_id_from_db = match get_session_id_from_db(&user_id_from_cookie.parse::<i32>().unwrap()) {
-        Ok(id) => id,
-        Err(e) => {
-            println!("{:?}", e);
-            return Err(rocket::http::Status::Unauthorized)
-        }
-    };
-    
-    let session_id_from_cookie = match funcs::get_session_id_from_cookie(cookies) {
-        Ok(cookie) => cookie,
-        Err(e) => {
-            println!("{:?}", e);
-            return Err(rocket::http::Status::Unauthorized);
-        }
-    };
-
-    let file_path = Path::new(HOME_PATH);
-    
-    if session_id_from_db == session_id_from_cookie {
-        NamedFile::open(file_path)
-            .await
-            .map_err(|_e| rocket::http::Status::NotFound)
-
-    } else {
-        Err(rocket::http::Status::Unauthorized)
-    }
-
 }
 
 #[post("/home.html", data = "<request>")]
-pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Json<> {
-    let status = request.into_inner();
+pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Json<ResponseStruct> {
+    let mut response = ResponseStruct {
+        response: String::from(""),
+        message: String::from(""),
+    };
 
-    if true {
-        Ok(Redirect::to("/"))
-    } else {
-        Err(BadJSONData::StatusUnrecognized)
+    let status = request.into_inner();
+    let session_id_from_cookie = match funcs::get_session_id_from_cookie(cookies) {
+        Ok(session_id) => session_id,
+        Err(e) => {
+            println!("{:?}", e);
+            response.response = "BAD".to_string();
+            response.message = "SESSION NOT FOUND IN COOKIE".to_string();
+            return Json(response)
+        }
+    };
+
+    match delete_session_id(&session_id_from_cookie) {
+        Ok(_) => {
+            response.response = "GOOD".to_string();
+            response.message = "SESSION SUCCESSFULLY DELETED".to_string();
+            return Json(response)
+        }
+
+        Err(e) => {
+            println!("{:?}", e);
+            response.response = "BAD".to_string();
+            response.message = "SESSION NOT DELETED".to_string();
+            return Json(response)
+        }   
     }
 }
-

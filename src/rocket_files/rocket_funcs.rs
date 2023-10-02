@@ -1,7 +1,7 @@
 #![allow(unused_assignments)]
 
 use rocket::http::CookieJar;
-use crate::err::NotFoundError;
+use crate::rocket_files::enums::NotFoundError;
 
 pub const ACCOUNT_CREATION_SUCCESS_MESSAGE: &str = "ACCOUNT CREATION SUCCESSFUL";
 pub const ACCOUNT_CREATION_FAILURE_MESSAGE: &str = "ACCOUNT CREATION FALIED";

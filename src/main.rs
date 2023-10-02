@@ -5,18 +5,24 @@ extern crate rand;
 
 mod schema;
 mod models;
-mod rocket_structs;
-mod rocket_routes;
-mod rocket_funcs;
-mod err;
+mod rocket_files {
+    mod enums;
+    mod rocket_funcs;
+    mod rocket_structs;
+    pub mod routes {
+        pub mod get_routes;
+        pub mod post_routes;
+    }
+}
 
 use rocket::fs::{FileServer, relative};
-use crate::rocket_routes::*;
+use crate::rocket_files::routes::get_routes::{redirect_to_login, get_home};
+use crate::rocket_files::routes::post_routes::{post_home, login, create_account};
 
 #[launch]
 fn rocket() -> _ {
     
     rocket::build()
-        .mount("/", routes![ test, create_account, login, redirect_to_login, get_home])
+        .mount("/", routes![create_account, login, redirect_to_login, get_home, post_home])
         .mount("/", FileServer::from(relative!("static/")))
 }

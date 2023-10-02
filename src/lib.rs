@@ -119,3 +119,13 @@ pub fn get_user_id(username_param: &str) -> Result<i32, diesel::result::Error> {
     id
 }
 
+pub fn delete_session_id(session_id_param: &String) -> Result<() , diesel::result::Error>{
+    let mut conn = establish_connection();
+
+    match diesel::delete(sessions::table.filter(sessions::session_id.eq(session_id_param)))
+        .execute(&mut conn)
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e)
+    }
+}
