@@ -3,6 +3,8 @@
 use rocket::http::CookieJar;
 use crate::rocket_files::enums::NotFoundError;
 
+use super::rocket_structs::ResponseStruct;
+
 pub const ACCOUNT_CREATION_SUCCESS_MESSAGE: &str = "ACCOUNT CREATION SUCCESSFUL";
 pub const ACCOUNT_CREATION_FAILURE_MESSAGE: &str = "ACCOUNT CREATION FALIED";
 pub const ACCOUNT_CREATION_FAILURE_USER_EXISTS: &str = "ACCOUNT CREATION FAILED: User already exists";
@@ -10,6 +12,8 @@ pub const ACCOUNT_LOGIN_SUCCESS_MESSAGE: &str = "ACCOUNT LOGIN SUCCESSFUL";
 pub const ACCOUNT_LOGIN_FAILURE_USER_NOT_FOUND_MESSAGE: &str = "ACCOUNT LOGIN UNSUCCESSFUL: Username not found";
 pub const ACCOUNT_LOGIN_FAILURE_SESSION_FAIL: &str = "ACCOUT LOGIN UNSUCCESSFUL: Session insert fail";
 pub const SESSION_ID_NOT_FOUND_COOKIE: &str = "SESSION NOT FOUND: Session not found from cookie";
+pub const SESSION_ID_INSERTION_SUCCESSFUL: &str = "SESSION ID INSERTION SUCCESSFUL";
+pub const SESSION_ID_INSERTION_FAILURE: &str = "SESSION ID INSERTION FAILURE";
 pub const USER_ID_NOT_FOUND_COOKIE: &str = "USER_ID NOT FOUND: User ID not fround from cookie";
 
 pub fn format_credentials(username: Option<&str>, 
@@ -61,4 +65,17 @@ pub fn get_user_id_from_cookie(cookies: &CookieJar<'_>) -> Result<String, NotFou
         None => Err(NotFoundError::UserIdNotFoundFromCookie)
     }
 
+}
+
+pub fn create_response_struct() -> ResponseStruct {
+    ResponseStruct { response: (String::from("")), message: String::from("") }
+}
+
+pub fn modify_response_stuct(response_struct: &mut ResponseStruct,
+    response: String,
+    message: String
+) ->  &mut ResponseStruct {
+    response_struct.response = response;
+    response_struct.message = message;
+    response_struct
 }
