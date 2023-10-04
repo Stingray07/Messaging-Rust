@@ -1,17 +1,14 @@
 use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct};
 use crate::rocket_files::rocket_funcs as funcs;
-use chrono::{NaiveDate, Utc};
 use rocket::serde::json::Json;
 use rocket::response::Redirect;
 use rocket::http::{Cookie, CookieJar};
-use message::*;
+use crate::diesel_funcs as diesel_funcs;
+
 
 #[post("/create_account.html", data = "<new_account>")]
 pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> {
-
-    let account = new_account.into_inner();
-    let current_date = Utc::now().date_naive();
-    let option_current_date: Option<NaiveDate> = Some(current_date);
+    let mut account = new_account.into_inner();
 
     funcs::format_credentials(
         Some(&account.username), 
@@ -21,29 +18,25 @@ pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> 
 
     let mut data = funcs::create_response_struct();
 
-    if user_exists(&account.username, None){
+    if diesel_funcs::user_exists(&account.username, None){
         funcs::modify_response_stuct(&mut data,
             String::from("BAD"),
             funcs::ACCOUNT_CREATION_FAILURE_USER_EXISTS.to_string());
 
     } else {
-        match insert_users(
-            account.username, 
-            account.password, 
-            account.first_name, 
-            account.last_name, 
-            option_current_date) 
+        match diesel_funcs::insert_users(&mut account) 
         {
             Ok(_) => {
-                data.response = String::from("OK");
-                data.message = funcs::ACCOUNT_CREATION_SUCCESS_MESSAGE.to_string();
+                funcs::modify_response_stuct(&mut data, 
+                    String::from("OK"), 
+                    funcs::ACCOUNT_CREATION_SUCCESS_MESSAGE.to_string());
         },
             Err(_) => {
-                data.response = String::from("BAD");
-                data.message = funcs::ACCOUNT_CREATION_FAILURE_MESSAGE.to_string();
+                funcs::modify_response_stuct(&mut data, 
+                    String::from("BAD"), 
+                    funcs::ACCOUNT_CREATION_FAILURE_MESSAGE.to_string());
             } 
-        }    
-        
+        }         
     }  
 
     Json(data)
@@ -60,17 +53,13 @@ pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
         Some(&account.password),
         None,
         None);
-
-    let mut data = funcs::create_response_struct();
     
-    if user_exists(&account.username, Some(&account.password)){
-        data.message = funcs::ACCOUNT_LOGIN_SUCCESS_MESSAGE.to_string();
-        data.response = String::from("OK");
+    if diesel_funcs::user_exists(&account.username, Some(&account.password)){
 
-        let user_id = get_user_id(&account.username).unwrap();
-        let session_id = generate_session_id();
+        let user_id = diesel_funcs::get_user_id(&account.username).unwrap();
+        let session_id = diesel_funcs::generate_session_id();
 
-        match insert_session(&user_id, &session_id) {
+        match diesel_funcs::insert_session(&user_id, &session_id) {
             Ok(()) => {
                 println!("{:?}", funcs::SESSION_ID_INSERTION_SUCCESSFUL);
             }
@@ -80,7 +69,7 @@ pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
                 println!("{:?}", e);
             }
         }
-            
+        // add user name to cookie for easier access to username
         let cookie_user_id = Cookie::new("user_id", user_id.to_string());
         let cookie_session_id = Cookie::new("session_id", session_id.to_string());
 
@@ -112,7 +101,7 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
         }
     };
 
-    match delete_session_id(&session_id_from_cookie) {
+    match diesel_funcs::delete_session_id(&session_id_from_cookie) {
         Ok(_) => {
             funcs::modify_response_stuct(&mut response,
                 String::from("GOOD"),

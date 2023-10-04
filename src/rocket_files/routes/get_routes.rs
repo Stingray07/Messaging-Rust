@@ -1,7 +1,7 @@
-use crate::rocket_files::rocket_funcs as funcs;
+use crate::rocket_files::rocket_funcs as rocket_funcs;
+use crate::diesel_funcs as diesel_funcs;
 use rocket::response::Redirect;
 use rocket::http:: CookieJar;
-use message::*;
 use rocket::fs::NamedFile;
 use std::path::Path;
 
@@ -16,7 +16,7 @@ pub fn redirect_to_login() -> Redirect {
 #[get("/home.html")]
 pub async fn get_home(cookies: &CookieJar<'_>) -> Result<NamedFile, rocket::http::Status> {
 
-    let user_id_from_cookie = match funcs::get_user_id_from_cookie(cookies) {
+    let user_id_from_cookie = match rocket_funcs::get_user_id_from_cookie(cookies) {
         Ok(user_id) => user_id,
         Err(e) => {
             println!("{:?}", e);
@@ -24,7 +24,10 @@ pub async fn get_home(cookies: &CookieJar<'_>) -> Result<NamedFile, rocket::http
         }
     };
 
-    let session_id_from_db = match get_session_id_from_db(&user_id_from_cookie.parse::<i32>().unwrap()) {
+    let session_id_from_db = match diesel_funcs::get_session_id_from_db(
+        &user_id_from_cookie.parse::<i32>()
+        .unwrap()) 
+    {
         Ok(id) => id,
         Err(e) => {
             println!("{:?}", e);
@@ -32,7 +35,7 @@ pub async fn get_home(cookies: &CookieJar<'_>) -> Result<NamedFile, rocket::http
         }
     };
     
-    let session_id_from_cookie = match funcs::get_session_id_from_cookie(cookies) {
+    let session_id_from_cookie = match rocket_funcs::get_session_id_from_cookie(cookies) {
         Ok(cookie) => cookie,
         Err(e) => {
             println!("{:?}", e);

@@ -6,11 +6,9 @@ use dotenvy::dotenv;
 use std::env;
 use crate::schema::users::{self};
 use crate::schema::sessions::{self};
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc};
 use rand::Rng;
-
-mod schema;
-mod models;
+use crate::rocket_files::rocket_structs::CreateAccount;
 
 
 pub fn establish_connection() -> PgConnection {
@@ -21,26 +19,46 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn insert_users( 
-    username_param: String,
-    acc_password_param: String, 
-    first_name_param: String,
-    last_name_param: String,
-    creation_date_param: Option<NaiveDate>
-) -> Result<(), Error> { 
-    let mut conn = establish_connection();
+// pub fn insert_users( 
+//     username_param: String,
+//     acc_password_param: String, 
+//     first_name_param: String,
+//     last_name_param: String,
+//     creation_date_param: Option<NaiveDate>
+// ) -> Result<(), Error> { 
+//     let mut conn = establish_connection();
+
+//     match diesel::insert_into(users::table)
+//         .values((
+//             users::username.eq(username_param),
+//             users::acc_password.eq(acc_password_param), 
+//             users::first_name.eq(first_name_param), 
+//             users::last_name.eq(last_name_param), 
+//             users::creation_date.eq(creation_date_param)))
+//         .execute(&mut conn)
+//     {
+//         Ok(_) => Ok(()),
+//         Err(e) => Err(e),
+//     }
+// }
+
+pub fn insert_users(account: &mut CreateAccount) -> Result<(), Error> {
+    let mut conn =  establish_connection();
+    let current_date = Utc::now().date_naive();
+    let option_current_date: Option<NaiveDate> = Some(current_date);
 
     match diesel::insert_into(users::table)
         .values((
-            users::username.eq(username_param),
-            users::acc_password.eq(acc_password_param), 
-            users::first_name.eq(first_name_param), 
-            users::last_name.eq(last_name_param), 
-            users::creation_date.eq(creation_date_param)))
+            users::username.eq(&account.username),
+            users::acc_password.eq(&account.password),
+            users::first_name.eq(&account.first_name),
+            users::last_name.eq(&account.last_name),
+            users::creation_date.eq(option_current_date)
+        ))
         .execute(&mut conn)
     {
         Ok(_) => Ok(()),
-        Err(e) => Err(e),
+        Err(e) => Err(e)
     }
 }
 
