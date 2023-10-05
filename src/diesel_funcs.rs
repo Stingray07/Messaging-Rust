@@ -19,29 +19,6 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-// pub fn insert_users( 
-//     username_param: String,
-//     acc_password_param: String, 
-//     first_name_param: String,
-//     last_name_param: String,
-//     creation_date_param: Option<NaiveDate>
-// ) -> Result<(), Error> { 
-//     let mut conn = establish_connection();
-
-//     match diesel::insert_into(users::table)
-//         .values((
-//             users::username.eq(username_param),
-//             users::acc_password.eq(acc_password_param), 
-//             users::first_name.eq(first_name_param), 
-//             users::last_name.eq(last_name_param), 
-//             users::creation_date.eq(creation_date_param)))
-//         .execute(&mut conn)
-//     {
-//         Ok(_) => Ok(()),
-//         Err(e) => Err(e),
-//     }
-// }
-
 pub fn insert_users(account: &mut CreateAccount) -> Result<(), Error> {
     let mut conn =  establish_connection();
     let current_date = Utc::now().date_naive();

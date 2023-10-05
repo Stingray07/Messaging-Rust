@@ -3,6 +3,7 @@ extern crate rocket;
 extern crate diesel;
 extern crate rand;
 
+mod consts;
 mod schema;
 mod diesel_funcs;
 mod models;
@@ -17,12 +18,16 @@ mod rocket_files {
 }
 
 use rocket::fs::{FileServer, relative};
+use rocket_files::rocket_structs::SharedData;
 use crate::rocket_files::routes::get_routes::{redirect_to_login, get_home};
 use crate::rocket_files::routes::post_routes::{post_home, login, create_account};
 
 #[launch]
 fn rocket() -> _ {
+    let shared_data = SharedData { value: 42 };
+
     rocket::build()
+        .manage(shared_data)
         .mount("/", routes![create_account, login, redirect_to_login, get_home, post_home])
         .mount("/", FileServer::from(relative!("static/")))
 }

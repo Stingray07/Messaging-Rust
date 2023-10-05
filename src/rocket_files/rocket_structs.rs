@@ -24,3 +24,7 @@ pub struct ResponseStruct {
 pub struct StatusStruct{
     pub status: String,
 }
+
+pub struct SharedData {
+    pub value : i32,
+}

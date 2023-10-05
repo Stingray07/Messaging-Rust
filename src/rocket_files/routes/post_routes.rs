@@ -1,9 +1,11 @@
-use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct};
+use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct, SharedData};
 use crate::rocket_files::rocket_funcs as funcs;
+use rocket::State;
 use rocket::serde::json::Json;
 use rocket::response::Redirect;
 use rocket::http::{Cookie, CookieJar};
 use crate::diesel_funcs as diesel_funcs;
+use crate::consts as message;
 
 
 #[post("/create_account.html", data = "<new_account>")]
@@ -21,7 +23,7 @@ pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> 
     if diesel_funcs::user_exists(&account.username, None){
         funcs::modify_response_stuct(&mut data,
             String::from("BAD"),
-            funcs::ACCOUNT_CREATION_FAILURE_USER_EXISTS.to_string());
+            message::ACCOUNT_CREATION_FAILURE_USER_EXISTS_MESSAGE.to_string());
 
     } else {
         match diesel_funcs::insert_users(&mut account) 
@@ -29,12 +31,12 @@ pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> 
             Ok(_) => {
                 funcs::modify_response_stuct(&mut data, 
                     String::from("OK"), 
-                    funcs::ACCOUNT_CREATION_SUCCESS_MESSAGE.to_string());
+                    message::ACCOUNT_CREATION_SUCCESS_MESSAGE.to_string());
         },
             Err(_) => {
                 funcs::modify_response_stuct(&mut data, 
                     String::from("BAD"), 
-                    funcs::ACCOUNT_CREATION_FAILURE_MESSAGE.to_string());
+                    message::ACCOUNT_CREATION_FAILURE_MESSAGE.to_string());
             } 
         }         
     }  
@@ -44,8 +46,8 @@ pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> 
 }
 
 #[post("/login.html", data = "<request>")]
-pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
-
+pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>, shared_data: &State<SharedData>) -> Redirect {
+    println!("VALUE FROM POST_LOGIN = {:?}", shared_data.value);
     let account = request.into_inner();
 
     funcs::format_credentials(
@@ -61,26 +63,27 @@ pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
 
         match diesel_funcs::insert_session(&user_id, &session_id) {
             Ok(()) => {
-                println!("{:?}", funcs::SESSION_ID_INSERTION_SUCCESSFUL);
+                println!("{:?}", message::SESSION_ID_INSERTION_SUCCESSFUL_MESSAGE);
             }
 
             Err(e) => {
-                println!("{:?}", funcs::SESSION_ID_INSERTION_FAILURE);
+                println!("{:?}", message::SESSION_ID_INSERTION_FAILURE_MESSAGE);
                 println!("{:?}", e);
             }
         }
-        // add user name to cookie for easier access to username
+
+        let cookie_username = Cookie::new("username", account.username);
         let cookie_user_id = Cookie::new("user_id", user_id.to_string());
         let cookie_session_id = Cookie::new("session_id", session_id.to_string());
 
         cookies.add(cookie_user_id);
         cookies.add(cookie_session_id);
+        cookies.add(cookie_username);
 
         Redirect::to("/home.html")
             
     } else {
-        println!("{:?}", funcs::ACCOUNT_LOGIN_FAILURE_USER_NOT_FOUND_MESSAGE);
-
+        println!("{:?}", message::ACCOUNT_LOGIN_FAILURE_USER_NOT_FOUND_MESSAGE);
         Redirect::to("/")
     }
 }
@@ -96,7 +99,7 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
             println!("{:?}", e);
             funcs::modify_response_stuct(&mut response,
                 String::from("BAD"),
-                "SESSION NOT FOUND IN COOKIE".to_string());
+                message::SESSION_ID_NOT_FOUND_COOKIE.to_string());
             return Ok(Json(response))
         }
     };
@@ -105,7 +108,7 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
         Ok(_) => {
             funcs::modify_response_stuct(&mut response,
                 String::from("GOOD"),
-                "SESSION SUCCESSFULLY DELETED".to_string());
+                message::SESSION_ID_DELETION_SUCCESSFUL_MESSAGE.to_string());
             return Err(Redirect::to("/"))
         }
 
@@ -113,7 +116,7 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
             println!("{:?}", e);
             funcs::modify_response_stuct(&mut response,
                 String::from("BAD"),
-                "SESSION NOT DELETED".to_string());
+                message::SESSION_ID_DELETION_UNSUCCESSFUL_MESSAGE.to_string());
             return Ok(Json(response))
         }   
     }
