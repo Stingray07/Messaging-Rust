@@ -1,12 +1,14 @@
-use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct, SharedData};
+use crate::rocket_files::rocket_structs::{CreateAccount, LoginAccount, ResponseStruct, StatusStruct, ChatMessage};
 use crate::rocket_files::rocket_funcs as funcs;
-use rocket::State;
+use crate::diesel_funcs as diesel_funcs;
+use crate::consts as message;
+use rocket::{State, Shutdown};
 use rocket::serde::json::Json;
 use rocket::response::Redirect;
 use rocket::http::{Cookie, CookieJar};
-use crate::diesel_funcs as diesel_funcs;
-use crate::consts as message;
-
+use rocket::tokio::sync::broadcast::{Sender, error::RecvError};
+use rocket::response::stream::{EventStream, Event};
+use rocket::tokio::select;
 
 #[post("/create_account.html", data = "<new_account>")]
 pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> {
@@ -46,8 +48,7 @@ pub fn create_account(new_account: Json<CreateAccount>) -> Json<ResponseStruct> 
 }
 
 #[post("/login.html", data = "<request>")]
-pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>, shared_data: &State<SharedData>) -> Redirect {
-    println!("VALUE FROM POST_LOGIN = {:?}", shared_data.value);
+pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
     let account = request.into_inner();
 
     funcs::format_credentials(
@@ -120,4 +121,30 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
             return Ok(Json(response))
         }   
     }
+}
+
+#[get("/events")]
+pub async fn events(queue: &State<Sender<ChatMessage>>, mut end: Shutdown) -> EventStream![] {
+    let mut rx = queue.subscribe();
+    EventStream! {
+        loop {
+            let msg = select! {
+                msg = rx.recv() => match msg {
+                    Ok(msg) => msg,
+                    Err(RecvError::Closed) => break,
+                    Err(RecvError::Lagged(_)) => continue,
+                },
+                _ = &mut end => break,
+            };
+
+            yield Event::json(&msg);
+        }
+    }
+}
+
+#[post("/message", data = "<request>")]
+pub fn post_message(request: Json<ChatMessage>, queue: &State<Sender<ChatMessage>>) {
+    let x = request.clone();
+    println!("{:?}", x);
+    let _res = queue.send(request.into_inner());
 }

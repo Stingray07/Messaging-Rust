@@ -25,6 +25,8 @@ pub struct StatusStruct{
     pub status: String,
 }
 
-pub struct SharedData {
-    pub value : i32,
+#[derive(Deserialize, Clone, Debug, Serialize)]
+pub struct ChatMessage {
+    pub message : String,
+    pub username: String
 }

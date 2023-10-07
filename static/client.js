@@ -100,7 +100,10 @@ if (window.location.href == CREATE_ACCOUNT_ROUTE) {
   });
 }
 
+// ====================================== HOME ROUTE =====================================
+
 if (window.location.href == HOME_ROUTE) {
+  console.log(document.cookie);
   logout_button.addEventListener("click", () => {
     console.log(document.cookie);
     let data = {
@@ -108,5 +111,26 @@ if (window.location.href == HOME_ROUTE) {
     };
 
     post_request(HOME_ROUTE, data);
+  });
+
+  const eventSource = new EventSource("/events");
+  const messages = document.getElementById("messages");
+  const input = document.getElementById("input");
+  const button = document.querySelector("button");
+
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const messageElement = document.createElement("li");
+    messageElement.textContent =
+      "MESSAGE = " + data.message + " USER = " + data.username;
+    messages.appendChild(messageElement);
+  };
+
+  //get cookies
+  button.addEventListener("click", () => {
+    const message = input.value;
+    if (message.trim() !== "") {
+      input.value = "";
+    }
   });
 }

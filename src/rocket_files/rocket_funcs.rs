@@ -2,7 +2,7 @@
 
 use rocket::http::CookieJar;
 use crate::rocket_files::enums::NotFoundError;
-use super::rocket_structs::{ResponseStruct, SharedData};
+use super::rocket_structs::{ResponseStruct};
 use rocket::State;
 
 pub fn format_credentials(username: Option<&str>, 

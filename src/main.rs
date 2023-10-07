@@ -18,16 +18,16 @@ mod rocket_files {
 }
 
 use rocket::fs::{FileServer, relative};
-use rocket_files::rocket_structs::SharedData;
+use rocket_files::rocket_structs::ChatMessage;
+use rocket::tokio::sync::broadcast::{channel};
 use crate::rocket_files::routes::get_routes::{redirect_to_login, get_home};
-use crate::rocket_files::routes::post_routes::{post_home, login, create_account};
+use crate::rocket_files::routes::post_routes::{post_home, login, create_account, post_message, events};
 
 #[launch]
 fn rocket() -> _ {
-    let shared_data = SharedData { value: 42 };
 
     rocket::build()
-        .manage(shared_data)
-        .mount("/", routes![create_account, login, redirect_to_login, get_home, post_home])
+        .manage(channel::<ChatMessage>(1024).0)
+        .mount("/", routes![create_account, login, redirect_to_login, get_home, post_home, post_message, events])
         .mount("/", FileServer::from(relative!("static/")))
 }
