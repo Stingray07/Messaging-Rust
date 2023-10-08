@@ -84,16 +84,23 @@ pub fn login(request: Json<LoginAccount>, cookies: &CookieJar<'_>) -> Redirect {
         Redirect::to("/home.html")
             
     } else {
-        println!("{:?}", message::ACCOUNT_LOGIN_FAILURE_USER_NOT_FOUND_MESSAGE);
+        println!("{:?}", message::ACCOUNT_CREDENTIALS_NOT_FOUND);
         Redirect::to("/")
     }
 }
 
 #[post("/home.html", data = "<request>")]
-pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result<Json<ResponseStruct>, Redirect> {
+pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result<Redirect, Json<ResponseStruct>> {
     let mut response = funcs::create_response_struct();
-
     let status = request.into_inner();
+    
+    if status.status != "logout" {
+        funcs::modify_response_stuct(&mut response,
+            String::from("BAD"), 
+            message::BAD_STATUS_POST_REQUEST.to_string());
+            return Err(Json(response))
+    }
+
     let session_id_from_cookie = match funcs::get_session_id_from_cookie(cookies) {
         Ok(session_id) => session_id,
         Err(e) => {
@@ -101,25 +108,26 @@ pub fn post_home(request: Json<StatusStruct>, cookies: &CookieJar<'_>) -> Result
             funcs::modify_response_stuct(&mut response,
                 String::from("BAD"),
                 message::SESSION_ID_NOT_FOUND_COOKIE.to_string());
-            return Ok(Json(response))
+            return Err(Json(response))
         }
     };
 
     match diesel_funcs::delete_session_id(&session_id_from_cookie) {
-        Ok(_) => {
-            funcs::modify_response_stuct(&mut response,
-                String::from("GOOD"),
-                message::SESSION_ID_DELETION_SUCCESSFUL_MESSAGE.to_string());
-            return Err(Redirect::to("/"))
-        }
-
         Err(e) => {
             println!("{:?}", e);
             funcs::modify_response_stuct(&mut response,
                 String::from("BAD"),
                 message::SESSION_ID_DELETION_UNSUCCESSFUL_MESSAGE.to_string());
-            return Ok(Json(response))
+            return Err(Json(response))
         }   
+        
+        Ok(_) => {
+            funcs::modify_response_stuct(&mut response,
+                String::from("GOOD"),
+                message::SESSION_ID_DELETION_SUCCESSFUL_MESSAGE.to_string());
+            return Ok(Redirect::to("/"))
+        }
+
     }
 }
 

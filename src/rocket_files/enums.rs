@@ -1,11 +1,10 @@
 use std::fmt::{self};
-use crate::consts::{SESSION_ID_NOT_FOUND_COOKIE, USER_ID_NOT_FOUND_COOKIE, USERNAME_NOT_FOUND_COOKIE}; 
+use crate::consts::{SESSION_ID_NOT_FOUND_COOKIE, USER_ID_NOT_FOUND_COOKIE}; 
 
 #[derive(Debug)]
 pub enum NotFoundError {
     SessionIdNotFoundFromCookie,
     UserIdNotFoundFromCookie,
-    UsernameNotFoundFromCookie
 }
 
 impl fmt::Display for NotFoundError {
@@ -13,7 +12,6 @@ impl fmt::Display for NotFoundError {
         match self {
             NotFoundError::SessionIdNotFoundFromCookie => write!(f,"{:?}", SESSION_ID_NOT_FOUND_COOKIE),
             NotFoundError::UserIdNotFoundFromCookie => write!(f, "{:?}", USER_ID_NOT_FOUND_COOKIE),
-            NotFoundError::UsernameNotFoundFromCookie => write!(f, "{:?}", USERNAME_NOT_FOUND_COOKIE)
         }
     }
 }

@@ -20,7 +20,7 @@ pub struct ResponseStruct {
     pub message: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct StatusStruct{
     pub status: String,
 }

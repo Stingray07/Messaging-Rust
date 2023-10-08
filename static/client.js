@@ -11,6 +11,7 @@ const logout_button = document.getElementById("logout");
 const LOGIN_ROUTE = "http://localhost:8000/login.html";
 const CREATE_ACCOUNT_ROUTE = "http://localhost:8000/create_account.html";
 const HOME_ROUTE = "http://localhost:8000/home.html";
+const MESSAGE_ROUTE = "http://localhost:8000/message";
 const FILL_IN_FIELDS_MESSAGE = "PLEASE FILL IN ALL THE FIELDS";
 const ACCOUNT_CREATION_SUCCESS_MESSAGE = "ACCOUNT CREATION SUCCESSFUL";
 
@@ -49,6 +50,17 @@ function post_request(endpoint, data) {
       }
     })
     .catch((error) => console.log("error", error));
+}
+
+function getCookie(name) {
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.trim().split("=");
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue);
+    }
+  }
+  return null; // Return null if the cookie with the specified name is not found
 }
 
 // ===========================LOGIN ACCOUNT JS=====================================
@@ -116,21 +128,27 @@ if (window.location.href == HOME_ROUTE) {
   const eventSource = new EventSource("/events");
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
-  const button = document.querySelector("button");
+  const button = document.getElementById("send_button");
 
   eventSource.onmessage = (event) => {
     const data = JSON.parse(event.data);
     const messageElement = document.createElement("li");
-    messageElement.textContent =
-      "MESSAGE = " + data.message + " USER = " + data.username;
+    messageElement.textContent = data.username + ": " + data.message;
     messages.appendChild(messageElement);
   };
 
   //get cookies
   button.addEventListener("click", () => {
+    const username = getCookie("username");
+    console.log(username);
     const message = input.value;
+    const data = {
+      username: username,
+      message: message,
+    };
     if (message.trim() !== "") {
       input.value = "";
+      post_request(MESSAGE_ROUTE, data);
     }
   });
 }

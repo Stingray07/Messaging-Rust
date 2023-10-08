@@ -19,7 +19,7 @@ mod rocket_files {
 
 use rocket::fs::{FileServer, relative};
 use rocket_files::rocket_structs::ChatMessage;
-use rocket::tokio::sync::broadcast::{channel};
+use rocket::tokio::sync::broadcast::channel;
 use crate::rocket_files::routes::get_routes::{redirect_to_login, get_home};
 use crate::rocket_files::routes::post_routes::{post_home, login, create_account, post_message, events};
 

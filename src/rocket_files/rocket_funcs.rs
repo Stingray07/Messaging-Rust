@@ -2,8 +2,7 @@
 
 use rocket::http::CookieJar;
 use crate::rocket_files::enums::NotFoundError;
-use super::rocket_structs::{ResponseStruct};
-use rocket::State;
+use super::rocket_structs::ResponseStruct;
 
 pub fn format_credentials(username: Option<&str>, 
     password: Option<&str>, 
@@ -54,19 +53,6 @@ pub fn get_user_id_from_cookie(cookies: &CookieJar<'_>) -> Result<String, NotFou
         None => Err(NotFoundError::UserIdNotFoundFromCookie)
     }
 
-}
-
-pub fn get_username_from_cookie(cookies: &CookieJar<'_>) -> Result<String, NotFoundError> {
-    let mut username_from_cookie = String::from("");
-
-    match cookies.get("username") {
-        Some(username) => {
-            username_from_cookie = username.value().to_string();
-            println!("USERNAME FROM COOKIE = {:?}", username_from_cookie);
-            Ok(username_from_cookie)
-        }
-        None => Err(NotFoundError::UsernameNotFoundFromCookie)
-    }
 }
 
 pub fn create_response_struct() -> ResponseStruct {
