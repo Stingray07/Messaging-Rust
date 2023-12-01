@@ -31,7 +31,7 @@ The project uses the [Rocket](https://rocket.rs/) web framework, [Diesel](https:
 4. Build and run the application
    ```bash
    cargo build --release
-   ./target/release/rocket-chat-app
+   ./target/release/Messaging-Rust
 
 5. Access the application in your web browser at http://localhost:8000.
 
