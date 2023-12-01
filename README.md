@@ -49,11 +49,6 @@ The project uses the [Rocket](https://rocket.rs/) web framework, [Diesel](https:
    /home : User home page (post-login) 
    /message : Post a chat message
 
-2. Create a .env file in the project root and add your Discord bot token and Canvas API key:
-
-   ```bash 
-   DISCORD_TOKEN='your_discord_bot_token'
-   CANVAS_API_KEY='your_canvas_api_key'
 
 ## Authentication
 ### Create Account:
